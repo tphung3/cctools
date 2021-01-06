@@ -19,11 +19,7 @@ pip install conda-pack
 conda install -y -c conda-forge ndcctools
 ```
 
-4. Install Tensorflow, Keras, and plotting dependencies. Using `conda`:
-```bash
-conda install numpy=1.18.1 tensorflow=1.15.0 certifi=2020.6.20 pandas=0.25.3 seaborn=0.10.1
-```
-Or, from PyPI using `pip`:
+4. Install Tensorflow, Keras, and plotting dependencies from PyPI using `pip`:
 ```bash
 pip install tensorflow numpy scipy scikit-learn pillow h5py keras matplotlib numpy seaborn
 ```
@@ -69,7 +65,8 @@ sweep.sh    - Sample bash script that performs a local hyperparameter sweep
 test.py     - Work Queue manager program used to distribute training tasks to remote workers
 plot_resources.py     	- Plot resources and hyperparameters of Resnet
 plot_resources_100.py  	- Plot resources and 4 hyperparameters of Resnet
-read_summary_log.py		- Read summmary log from running dist_sweep.py and write to resources_all.txtread_summary_log_100.py - Read summary log from running dist_sweep_100.py and write to resources_all_100.txt   
+read_summary_log.py		- Read summmary log from running dist_sweep.py and write to resources_all.txt
+read_summary_log_100.py - Read summary log from running dist_sweep_100.py and write to resources_all_100.txt   
 ```
 
 ## Run:
@@ -86,12 +83,6 @@ In a second terminal, run the following command to create workers to complete th
 ```bash
 condor_submit_workers $HOSTNAME 9213 400
 ```
-The results of all 400 executions are reported back to the Work Queue manager un-collated. To collate these results for plotting, run:
-```bash
-echo "loss, accuracy, batch_size, num_res_net_blocks, dropout_rate, epochs, steps_per_epoch, validation_steps" > output.csv
-awk 'FNR==2{print $0 >> "output.csv"}' results*.csv
-```
-For a visualization using heatmap, run `python plot.py`. This which will produce a heatmap reporting model accuracy as a function of dropout rate and number or residual blocks.
 
 To collect resources usage from running dist_sweep.py and dist_sweep_100.py, run respectively `python read_summary_log.py; python plot_resources.py` and `python read_summary_log_100.py; python plot_resources_100.py`. These commands will collect resources usage into resources_all.txt and resources_all_100.txt, and save 8 graphs plotting the resources usage and hyperparameters variations.
 ## Further Info:
@@ -101,6 +92,3 @@ $ python resnet.py -h
 usage: resnet.py -b <batch size> -r <number of ResNet blocks> -d <dropout rate> -e <number of epochs> -s <steps per epoch> -v <validation steps> -o <output file>
 ```
 
-When the application completes, you will find the collated results of the collections (.csv) along with plots of each collection's results as a function of their hyperparameters (.png) as output files in the application's directory. A sample output is provided below:
-
-![Output](https://github.com/tjuedema/cctools/blob/master/apps/wq_hypersweep/output.png)
