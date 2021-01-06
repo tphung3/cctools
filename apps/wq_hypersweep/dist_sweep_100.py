@@ -15,6 +15,9 @@ def compose_task(i,j, iteration):
     t.specify_file("resnet.py", "resnet.py", WORK_QUEUE_INPUT, cache=True)
     t.specify_file("script.sh", "script.sh", WORK_QUEUE_INPUT, cache=True)
     t.specify_file(outfile, outfile, WORK_QUEUE_OUTPUT, cache=False)
+	t.specify_cores(1)
+	t.specify_memory(4000)
+	t.specify_disk(4000)
     return t
 
 def main():
