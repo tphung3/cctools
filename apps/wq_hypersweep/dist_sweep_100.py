@@ -1,10 +1,12 @@
 from work_queue import *
 import sys
+import time
 
 def compose_task(i,j, iteration):
     d_rate = i*0.05
     r_blok = j
-    outfile = "results%f_%d_%d.csv" % (d_rate, r_blok, iteration)
+    outfile = "results%f_%d.csv" % (d_rate, r_blok)
+    submission_outfile = "dsweep_100_results/" + outfile
     command = "bash script.sh results%f_%d.csv %f %d" % (d_rate,r_blok, d_rate, r_blok)
 
     t = Task(command)
@@ -14,20 +16,24 @@ def compose_task(i,j, iteration):
     t.specify_file("datasets/cifar-10-batches-py", "datasets/cifar-10-batches-py", WORK_QUEUE_INPUT, cache=True)
     t.specify_file("resnet.py", "resnet.py", WORK_QUEUE_INPUT, cache=True)
     t.specify_file("script.sh", "script.sh", WORK_QUEUE_INPUT, cache=True)
-    t.specify_file(outfile, outfile, WORK_QUEUE_OUTPUT, cache=False)
-	t.specify_cores(1)
-	t.specify_memory(4000)
-	t.specify_disk(4000)
+    t.specify_file(submission_outfile, outfile, WORK_QUEUE_OUTPUT, cache=False)
+    t.specify_cores(1)
+    t.specify_memory(4000)
+    t.specify_disk(4000)
     return t
 
 def main():
-	
+	start = time.time()
 	try:
 		PORT = 9213
-		q = WorkQueue(port = PORT, debug_log = "debug.resnet_100.log")
-		q.enable_monitoring("all_summary_100")
-		q.specify_transactions_log("summary_resnet_100.log")
-		q.specify_name("resnet_100")
+		debug_log = "dsweep_100_debug.log"
+		resources_monitor_dir = "dsweep_100_resources_summary"
+		transactions_log = "dsweep_100_transactions.log"
+		project_name = "dsweep_100"
+		q = WorkQueue(port = PORT, debug_log = debug_log)
+		q.enable_monitoring(resources_monitor_dir)
+		q.specify_transactions_log(transactions_log)
+		q.specify_name(project_name)
 	except:
 		print("Instantiation of Work Queue failed.")
 		sys.exit(1)
@@ -62,7 +68,8 @@ def main():
 	print("All tasks complete.")
 	print("Whitelist:", whitelist)
 	print("Blacklist:", blacklist)
-
+	now = time.time() - start
+	print("Total workflow of d_sweep_100 takes " + str(now) + " seconds.")
 	sys.exit(0)
 
 if __name__ == '__main__':
