@@ -161,6 +161,10 @@ struct vine_resources * total_resources_last = 0;
 
 static int64_t last_task_received  = 0;
 
+// Whether the worker changes tasks' allocations over their executions or not.
+// Default is 0 meaning no.
+static int realtime_allocation_mode = 0;
+
 /* 0 means not given as a command line option. */
 static int64_t manual_cores_option = 0;
 static int64_t manual_disk_option = 0;
@@ -1892,6 +1896,9 @@ static void show_help(const char *cmd)
 	printf( " %-30s Set operating system string for the worker to report to manager instead\n", "-O,--os=<os>");
 	printf( " %-30s of the value in uname (%s).\n", "", os_name);
 	printf( " %-30s Set the location for creating the working directory of the worker.\n", "-s,--workdir=<path>");
+
+	printf( " %-30s Turn on realtime allocation mode for this worker.\n", "--realtime-allocation");
+
 	printf( " %-30s Set the number of cores reported by this worker. If not given, or less than 1,\n", "--cores=<n>");
 	printf( " %-30s then try to detect cores available.\n", "");
 
@@ -1916,7 +1923,7 @@ static void show_help(const char *cmd)
 }
 
 enum {LONG_OPT_DEBUG_FILESIZE = 256, LONG_OPT_BANDWIDTH,
-	  LONG_OPT_DEBUG_RELEASE, LONG_OPT_CORES, LONG_OPT_MEMORY,
+	  LONG_OPT_DEBUG_RELEASE, LONG_OPT_REALTIME_ALLOCATION, LONG_OPT_CORES, LONG_OPT_MEMORY,
 	  LONG_OPT_DISK, LONG_OPT_GPUS, LONG_OPT_DISABLE_SYMLINKS,
 	  LONG_OPT_IDLE_TIMEOUT, LONG_OPT_CONNECT_TIMEOUT,
 	  LONG_OPT_SINGLE_SHOT, LONG_OPT_WALL_TIME,
@@ -1946,6 +1953,7 @@ static const struct option long_options[] = {
 	{"os",                  required_argument,  0,  'O'},
 	{"workdir",             required_argument,  0,  's'},
 	{"bandwidth",           required_argument,  0,  LONG_OPT_BANDWIDTH},
+	{"realtime-allocation", no_argument,        0,  LONG_OPT_REALTIME_ALLOCATION},
 	{"cores",               required_argument,  0,  LONG_OPT_CORES},
 	{"memory",              required_argument,  0,  LONG_OPT_MEMORY},
 	{"disk",                required_argument,  0,  LONG_OPT_DISK},
@@ -2066,6 +2074,9 @@ int main(int argc, char *argv[])
 			break;
 		case LONG_OPT_DEBUG_RELEASE:
 			setenv("VINE_RESET_DEBUG_FILE", "yes", 1);
+			break;
+		case LONG_OPT_REALTIME_ALLOCATION:
+			realtime_allocation_mode = 1;
 			break;
 		case LONG_OPT_CORES:
 			if(!strncmp(optarg, "all", 3)) {
