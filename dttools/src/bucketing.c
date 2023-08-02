@@ -316,7 +316,7 @@ double bucketing_predict(bucketing_state_t* s, double prev_val)
             return -1;
         }
         
-        /* otherwise increase to exponent level */
+        /* otherwise increase to next closest exponent level */
         else
         {
             int exp = floor(log(prev_val/s->default_value)/log(s->increase_rate)) + 1;
@@ -324,72 +324,36 @@ double bucketing_predict(bucketing_state_t* s, double prev_val)
         } 
     }
 
-    struct list_cursor* lc = list_cursor_create(s->sorted_buckets); //cursor to iterate
-    if (!lc)
-    {
-        fatal("Cannot create list cursor\n");
-        return -1;
-    }
-    
-    /* reset to 0 */
-    if (!list_seek(lc, 0))
-    {
-        fatal("Cannot seek list\n");
-        return -1;
-    }
-
-    bucketing_bucket_t* bb_ptr = 0;   //pointer to hold item from list
     double sum = 0;                 //sum of probability
-    double ret_val;                 //predicted value to be returned
     int exp;                        //exponent to raise if prev_val > max_val
     double rand = random_double();  //random double to choose a bucket
     double total_net_prob = 1;      //total considered probability
-
-    /* Loop through list of buckets to choose 1 */
-    for (unsigned int i = 0; i < list_length(s->sorted_buckets); ++i, list_next(lc))
-    {
-        if (!list_get(lc, (void**) &bb_ptr))
-        {
-            fatal("Cannot get item from list\n");
-            return -1;
-        }
-
-        /* return if at last bucket */
-        if (i == list_length(s->sorted_buckets) - 1)
-        {
-            ret_val = bb_ptr->val;
-            
-            if (ret_val <= prev_val)
-            {
-                exp = floor(log(prev_val/s->default_value)/log(s->increase_rate)) + 1;
-                list_cursor_destroy(lc);
-                return s->default_value * pow(s->increase_rate, exp);   
-            }
-            
-            list_cursor_destroy(lc);
-            return ret_val;
-        }
-       
+    bucketing_bucket_t* current_bucket;
+   
+    list_first_item(s->sorted_buckets);
+    while ((current_bucket = list_next_item(s->sorted_buckets))) {
         /* skip the small buckets */
-        if (bb_ptr->prob <= prev_val)
+        if (current_bucket->val <= prev_val)
         {
-            total_net_prob -= bb_ptr->prob;
+            total_net_prob -= current_bucket->prob;
             continue;
         }
 
-        sum += bb_ptr->prob;
+        sum += current_bucket->prob;
 
-        if (sum / total_net_prob > rand) //rescale sum to [0, 1] as we skip small buckets
+        if (sum/total_net_prob > rand)
         {
-            ret_val = bb_ptr->val;
-
-            list_cursor_destroy(lc);
-            return ret_val;
+            return current_bucket->val;
         }
     }
-    
-    fatal("Control should never reach here\n");
-    return -1; 
+
+    /* hit the last bucket, so return value appropriately */
+    current_bucket = list_peek_tail(s->sorted_buckets);
+    if (current_bucket->val > prev_val) {
+        return current_bucket->val;
+    }
+    exp = floor(log(prev_val/s->default_value)/log(s->increase_rate)) + 1;
+    return s->default_value * pow(s->increase_rate, exp);
 }
 
 /** End: APIs **/

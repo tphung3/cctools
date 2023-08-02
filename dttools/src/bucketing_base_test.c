@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     int prime = 7000;
     int num = 2000;
     int multiple = 2;
-    int iters = 50;
+    int iters = 20;
     double pred;
     double prev_val = -1;
     
@@ -54,9 +54,15 @@ int main(int argc, char** argv)
     printf("Adding values\n");
     for (int i = 0; i < iters; ++i)
     {
-        num = num * multiple % prime;
         bucketing_sorted_points_print(s->sorted_points);
         bucketing_sorted_buckets_print(s->sorted_buckets);
+        num = num * multiple % prime;
+        if (i == 10) {
+            bucketing_predict(s, -1);
+            bucketing_predict(s, 1999);
+            bucketing_predict(s, 3999);
+            bucketing_predict(s, 4001);
+        }
         printf("iteration %d data value %d\n", i, num);
         while ((pred = bucketing_predict(s, prev_val)))
         {
@@ -79,13 +85,6 @@ int main(int argc, char** argv)
 
         bucketing_add(s, num);
         alloc = 0;
-        //printf("value added\n");
-        //if (i >= num_sampling_points - 1)
-        //{
-            //printf("Finding buckets\n");
-        //    bucketing_greedy_update_buckets(s);
-        //}
-        //printf("Sorted list length %d\n", list_length(s->sorted_points));
         printf("----------------------------------\n");
     }
     bucketing_state_delete(s);
