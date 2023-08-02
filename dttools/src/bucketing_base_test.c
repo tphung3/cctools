@@ -43,7 +43,7 @@ int main(int argc, char** argv)
     int prime = 7000;
     int num = 2000;
     int multiple = 2;
-    int iters = 20;
+    int iters = 50;
     double pred;
     double prev_val = -1;
     

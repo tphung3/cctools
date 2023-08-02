@@ -33,7 +33,7 @@ static void bucketing_point_delete(bucketing_point_t *p)
     free(p);
 }
 
-/* Insert a bucketing point into a sorted list of points in O(log(n))
+/* Insert a bucketing point into a sorted list of points in O(n)
  * @param l pointer to sorted list of points
  * @param p pointer to point */
 static void bucketing_insert_point_to_sorted_list(struct list* l, bucketing_point_t *p)
@@ -57,6 +57,7 @@ static void bucketing_insert_point_to_sorted_list(struct list* l, bucketing_poin
     if (!list_seek(lc, 0))
     {
         fatal("Cannot seek list to index 0\n");
+        list_cursor_destroy(lc);
         return;
     }
 
@@ -67,6 +68,7 @@ static void bucketing_insert_point_to_sorted_list(struct list* l, bucketing_poin
         if (!list_get(lc, (void**) &bpp))
         {
             fatal("Cannot get element from list.\n");
+            list_cursor_destroy(lc);
             return;
         }
 
