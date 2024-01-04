@@ -44,7 +44,7 @@ import subprocess
 import sys
 import tempfile
 import time
-
+import cloudpickle
 
 ##
 # @class ndcctools.taskvine.Manager
@@ -876,7 +876,9 @@ class Manager(object):
 
         # Add context to list of functions
         if context is not None:
+            function_list = list(function_list)
             function_list.append(context)
+            funtion_list = tuple(function_list)
     
         # Positional arguments are the list of functions to include in the library.
         # Create a unique hash of a combination of function names and bodies.
@@ -898,6 +900,7 @@ class Manager(object):
         pathlib.Path(library_cache_path).mkdir(mode=0o755, parents=True, exist_ok=True)
         
         context_arg_file = None
+        library_context_args_path = f"{library_cache_path}/context.args"
 
         # If the library code and environment exist, move on to creating the Library Task.
         # Else create them in the relevant paths.
@@ -912,11 +915,10 @@ class Manager(object):
             package_serverize.serverize_library_from_code(library_cache_path, function_list, name, need_pack=need_pack, import_modules=import_modules)
             
             # Register context if possible
-            library_context_args_path = f"{library_cache_path}/context.args"
-            if context is not None and context_args is not None and not os.path.isfile(library_context_args_path):
-                with open(library_context_args_path, 'w') as f:
+            if context is not None and context_arg is not None and not os.path.isfile(library_context_args_path):
+                context_arg = {'fn_args': [context_arg]}
+                with open(library_context_args_path, 'wb') as f:
                     cloudpickle.dump(context_arg, f)
-                context_arg_file = self.declare_file(library_context_args_path, cache=True, peer_transfer=True)
 
             
             # enable correct permissions for library code
@@ -934,7 +936,8 @@ class Manager(object):
             t.add_environment(f)
     
         # Add context arg file if needed.
-        if context_arg_file:
+        if context_arg_file or context:
+            context_arg_file = self.declare_file(library_context_args_path, cache=True, peer_transfer=True)
             t.add_input(context_arg_file, "context.args")
 
         # Declare the library code as an input.

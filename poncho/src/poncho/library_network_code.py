@@ -183,11 +183,11 @@ def library_network_code():
 
         # register context if needed
         if 'context_setup' in globals():
-            with open('context.args', 'r') as f:
+            with open('context.args', 'rb') as f:
                 context_arg = cloudpickle.load(f)
-            context_dict = context_setup(context_arg)
-            for k, v in context_dict:
-                globals()[k] = v
+            context_dict = context_setup(context_arg)['Result']
+            for k in context_dict:
+                globals()[k] = context_dict[k]
 
         while True:
             # check if parent exits
