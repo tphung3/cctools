@@ -866,7 +866,7 @@ class Manager(object):
     # @param add_env         Whether to automatically create and/or add environment to the library
     # @returns               A task to be used with @ref ndcctools.taskvine.manager.Manager.install_library.
     # @param import_modules  A list of modules to be imported at the preamble of library
-    def create_library_from_functions(self, name, *function_list, poncho_env=None, init_command=None, add_env=True, import_modules=None):
+    def create_library_from_functions(self, name, *function_list, poncho_env=None, init_command=None, add_env=True, import_modules=None, context=None, context_arg=None):
         # Delay loading of poncho until here, to avoid bringing in poncho dependencies unless needed.
         # Ensure poncho python library is available.
         try:
@@ -874,6 +874,10 @@ class Manager(object):
         except ImportError:
             raise ModuleNotFoundError(f"The poncho module is not available. Cannot create library {name}.")
 
+        # Add context to list of functions
+        if context is not None:
+            function_list.append(context)
+    
         # Positional arguments are the list of functions to include in the library.
         # Create a unique hash of a combination of function names and bodies.
         functions_hash = package_serverize.generate_functions_hash(function_list)
@@ -881,6 +885,8 @@ class Manager(object):
         # Create path for caching library code and environment based on function hash.
         library_cache_path = f"{self.cache_directory}/vine-library-cache/{functions_hash}"
         library_code_path = f"{library_cache_path}/library_code.py"
+
+
 
         # Don't create a custom poncho environment if it's already given.
         if poncho_env:
@@ -891,6 +897,8 @@ class Manager(object):
         # If library cache directory doesn't exist, create it.
         pathlib.Path(library_cache_path).mkdir(mode=0o755, parents=True, exist_ok=True)
         
+        context_arg_file = None
+
         # If the library code and environment exist, move on to creating the Library Task.
         # Else create them in the relevant paths.
         if not (os.path.isfile(library_code_path) and os.path.isfile(library_env_path)):
@@ -902,7 +910,15 @@ class Manager(object):
             
             # create library code and environment, if appropriate
             package_serverize.serverize_library_from_code(library_cache_path, function_list, name, need_pack=need_pack, import_modules=import_modules)
+            
+            # Register context if possible
+            library_context_args_path = f"{library_cache_path}/context.args"
+            if context is not None and context_args is not None and not os.path.isfile(library_context_args_path):
+                with open(library_context_args_path, 'w') as f:
+                    cloudpickle.dump(context_arg, f)
+                context_arg_file = self.declare_file(library_context_args_path, cache=True, peer_transfer=True)
 
+            
             # enable correct permissions for library code
             os.chmod(library_code_path, 0o775)
 
@@ -917,9 +933,14 @@ class Manager(object):
             f = self.declare_poncho(library_env_path, cache=True)
             t.add_environment(f)
     
+        # Add context arg file if needed.
+        if context_arg_file:
+            t.add_input(context_arg_file, "context.args")
+
         # Declare the library code as an input.
         f = self.declare_file(library_code_path, cache=True)
         t.add_input(f, "library_code.py")
+
         return t
 
     ##

@@ -181,6 +181,14 @@ def library_network_code():
         # 5 seconds to wait for select, any value long enough would probably do
         timeout = 5     
 
+        # register context if needed
+        if 'context_setup' in globals():
+            with open('context.args', 'r') as f:
+                context_arg = cloudpickle.load(f)
+            context_dict = context_setup(context_arg)
+            for k, v in context_dict:
+                globals()[k] = v
+
         while True:
             # check if parent exits
             c_ppid = os.getppid()
