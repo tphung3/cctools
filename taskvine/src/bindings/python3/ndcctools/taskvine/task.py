@@ -975,6 +975,7 @@ class FunctionCall(Task):
         self.set_time_max(900)     # maximum run time for function calls is 900s by default.
         self.needs_library(library_name)
         self.output_buffer = None
+        self.set_exec_method('fork')
 
     ##
     # Finalizes the task definition once the manager that will execute is run.

@@ -91,18 +91,24 @@ def library_network_code():
         function_id, function_name, function_sandbox, function_stdout_file = line.split(" ", maxsplit=3)
         function_id = int(function_id)
         
+        # get exec method
+        library_sandbox = os.getcwd()
+        try:
+            os.chdir(function_sandbox)
+            with open('infile', 'rb') as f:
+                event = cloudpickle.load(f)
+            exec_method = event['remote_task_exec_method']
+        except:
+            print(f'Library code: Function call failed due to {e}', file=sys.stderr)
+            sys.exit(1)
+        finally:
+            os.chdir(library_sandbox)
+        
         if function_name:
-            # exec method for now is fork only, direct will be supported later
-            exec_method = 'fork'
             if exec_method == "direct":
-                library_sandbox = os.getcwd()
                 try:
+                    # parameters are represented as infile, already loaded.
                     os.chdir(function_sandbox)
-
-                    # parameters are represented as infile.
-                    os.chdir(function_sandbox)
-                    with open('infile', 'rb') as f:
-                        event = cloudpickle.load(f)
 
                     # output of execution should be dumped to outfile.
                     with open('outfile', 'wb') as f:
@@ -113,6 +119,7 @@ def library_network_code():
                     sys.exit(1)
                 finally:
                     os.chdir(library_sandbox)
+                return -1, function_id
             else:
                 p = os.fork()
                 if p == 0:
@@ -123,8 +130,6 @@ def library_network_code():
 
                     # parameters are represented as infile.
                     os.chdir(function_sandbox)
-                    with open('infile', 'rb') as f:
-                        event = cloudpickle.load(f)
 
                     # output of execution should be dumped to outfile.
                     with open('outfile', 'wb') as f:
@@ -166,6 +171,17 @@ def library_network_code():
         in_pipe_fd = args.input_fd
         out_pipe_fd = args.output_fd
 
+        direct_mode = False
+        # register context if needed
+        if 'context_setup' in globals():
+            with open('context.args', 'rb') as f:
+                context_arg = cloudpickle.load(f)
+            context_dict = context_setup(context_arg)['Result']
+            for k in context_dict:
+                globals()[k] = context_dict[k]
+            if 'direct_mode' in globals():
+                direct_mode = globals()['direct_mode']
+
         # send configuration of library, just its name for now
         config = {
                 "name": name(),  # noqa: F821
@@ -181,14 +197,6 @@ def library_network_code():
         # 5 seconds to wait for select, any value long enough would probably do
         timeout = 5     
 
-        # register context if needed
-        if 'context_setup' in globals():
-            with open('context.args', 'rb') as f:
-                context_arg = cloudpickle.load(f)
-            context_dict = context_setup(context_arg)['Result']
-            for k in context_dict:
-                globals()[k] = context_dict[k]
-
         while True:
             # check if parent exits
             c_ppid = os.getppid()
@@ -201,9 +209,16 @@ def library_network_code():
             for re in rlist:
                 # worker has a function, run it
                 if re == in_pipe_fd:
-                    pid, func_id = start_function(in_pipe_fd)
-                    pid_to_func_id[pid] = func_id
+                    if direct_mode == True:
+                        _, function_id = start_function(in_pipe_fd)
+                        send_result(out_pipe_fd, function_id, args.worker_pid)
+                        
+                    else:
+                        pid, func_id = start_function(in_pipe_fd)
+                        pid_to_func_id[pid] = func_id
                 else:
+                    if direct_mode == True:
+                        continue
                     # at least 1 child exits, reap all.
                     # read only once as os.read is blocking if there's nothing to read.
                     # note that there might still be bytes in `r` but it's ok as they will
