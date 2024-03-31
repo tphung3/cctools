@@ -20,6 +20,7 @@ def library_network_code():
     import cloudpickle
     import select
     import signal
+    import time
  
     # self-pipe to turn a sigchld signal when a child finishes execution 
     # into an I/O event.
@@ -112,7 +113,14 @@ def library_network_code():
 
                     # output of execution should be dumped to outfile.
                     with open('outfile', 'wb') as f:
-                        cloudpickle.dump(globals()[function_name](event), f)
+                        with open('/tmp/hpdc.log', 'a') as f1:
+                            print(f'{time.time_ns()}: nano: start executing the real function')
+                        x = globals()[function_name](event)
+                        with open('/tmp/hpdc.log', 'a') as f1:
+                            print(f'{time.time_ns()}: nano: done executing the real function')
+                        cloudpickle.dump(x, f)
+                        with open('/tmp/hpdc.log', 'a') as f1:
+                            print(f'{time.time_ns()}: nano: done serializing results')
 
                 except Exception as e:
                     print(f'Library code: Function call failed due to {e}', file=sys.stderr)
@@ -187,7 +195,10 @@ def library_network_code():
                 "name": name(),  # noqa: F821
         }
         send_configuration(config, out_pipe_fd, args.worker_pid)
-        
+
+        with open('/tmp/hpdc.log', 'a') as f1:
+            print(f'{time.time_ns()}: nano: done library setup')
+
         # mapping of child pid to function id of currently running functions
         pid_to_func_id = {}
 

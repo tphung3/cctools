@@ -47,6 +47,7 @@ See the file COPYING for details.
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 
 /*
 Give the letter code used for the process sandbox dir.
@@ -391,6 +392,13 @@ int vine_process_execute(struct vine_process *p)
 		/* Library task passes the file descriptors to talk to the manager via
 		 * the command line plus the worker pid to wake the worker up
 		 * so it requires a special execl. */
+		FILE* cfp;
+        cfp = fopen("/tmp/hpdc.log", "a");
+        struct timeval ctv;
+        gettimeofday(&ctv, NULL);
+        fprintf(cfp, "%" PRIu64 ": start running library or python task\n",
+                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+        fclose(cfp);
 		if (p->type != VINE_PROCESS_TYPE_LIBRARY) {
 			execl("/bin/sh", "sh", "-c", p->task->command_line, (char *)0);
 		} else {

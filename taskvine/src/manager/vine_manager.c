@@ -73,6 +73,7 @@ See the file COPYING for details.
 #include <string.h>
 #include <sys/stat.h>
 #include <sys/wait.h>
+#include <sys/time.h>
 #include <time.h>
 #include <unistd.h>
 
@@ -2656,7 +2657,20 @@ static vine_result_code_t start_one_task(struct vine_manager *q, struct vine_wor
 		command_line = xxstrdup(t->command_line);
 	}
 
+	FILE* cfp;
+        cfp = fopen("/tmp/hpdc.log", "a");
+        struct timeval ctv;
+        gettimeofday(&ctv, NULL);
+        fprintf(cfp, "%" PRIu64 ": start sending task and data to worker\n",
+                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+
 	vine_result_code_t result = vine_manager_put_task(q, w, t, command_line, limits, 0);
+	
+        gettimeofday(&ctv, NULL);
+        fprintf(cfp, "%" PRIu64 ": done sending task and data to worker\n",
+                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+        fclose(cfp);
+
 
 	free(command_line);
 

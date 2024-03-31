@@ -919,6 +919,7 @@ class PythonTask(Task):
                 try:
                     import sys
                     import cloudpickle
+                    import time
                 except ImportError as e:
                     print("Could not execute PythonTask function because a module was not available at the worker.")
                     raise
@@ -931,7 +932,11 @@ class PythonTask(Task):
 
                 status = 0
                 try:
+                    with open('/tmp/hpdc.log', 'a') as f:
+                        print(f'{time.time_ns()}: nano: start executing the real function')
                     exec_out = exec_function(*args, **kwargs)
+                    with open('/tmp/hpdc.log', 'a') as f:
+                        print(f'{time.time_ns()}: nano: done executing the real function')
                 except Exception as e:
                     exec_out = e
                     status = 1
@@ -941,6 +946,8 @@ class PythonTask(Task):
                         cloudpickle.dump(exec_out, f)
                     else:
                         f.write(exec_out)
+                with open('/tmp/hpdc.log', 'a') as f:
+                    print(f'{time.time_ns()}: nano: done serializing results')
 
                 sys.exit(status)
                 """

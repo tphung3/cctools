@@ -30,6 +30,7 @@ See the file COPYING for details.
 #include <errno.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <sys/time.h>
 
 char *vine_monitor_wrap(
 		struct vine_manager *q, struct vine_worker_info *w, struct vine_task *t, struct rmsummary *limits);
