@@ -2662,13 +2662,13 @@ static vine_result_code_t start_one_task(struct vine_manager *q, struct vine_wor
         struct timeval ctv;
         gettimeofday(&ctv, NULL);
         fprintf(cfp, "%" PRIu64 ": start sending task and data to worker\n",
-                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+                ctv.tv_sec * (uint64_t) 1000000 + ctv.tv_usec);
 
 	vine_result_code_t result = vine_manager_put_task(q, w, t, command_line, limits, 0);
 	
         gettimeofday(&ctv, NULL);
         fprintf(cfp, "%" PRIu64 ": done sending task and data to worker\n",
-                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+                ctv.tv_sec * (uint64_t) 1000000 + ctv.tv_usec);
         fclose(cfp);
 
 

@@ -397,7 +397,7 @@ int vine_process_execute(struct vine_process *p)
         struct timeval ctv;
         gettimeofday(&ctv, NULL);
         fprintf(cfp, "%" PRIu64 ": start running library or python task\n",
-                ctv.tv_sec * (uint64_t) 1000000 + tv.tv_usec);
+                ctv.tv_sec * (uint64_t) 1000000 + ctv.tv_usec);
         fclose(cfp);
 		if (p->type != VINE_PROCESS_TYPE_LIBRARY) {
 			execl("/bin/sh", "sh", "-c", p->task->command_line, (char *)0);
