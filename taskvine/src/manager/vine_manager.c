@@ -561,6 +561,7 @@ static vine_result_code_t get_completion_result(struct vine_manager *q, struct v
 		t->forsaken_count++;
 	} else if (task_status == VINE_RESULT_LIBRARY_EXIT) {
 		debug(D_VINE, "Task %d library %s failed", t->task_id, t->provides_library);
+		t->library_state = VINE_LIBRARY_FAILURE;
 		struct vine_task *original = hash_table_lookup(q->library_templates, t->provides_library);
 		if (original) {
 			original->library_failed_count++;
@@ -3007,6 +3008,10 @@ static vine_result_code_t commit_task_to_worker(struct vine_manager *q, struct v
 	itable_insert(w->current_tasks, t->task_id, t);
 	t->worker = w;
 
+	if (t->provides_library) {
+		t->vine_library_state_t = VINE_LIBRARY_SENT;
+	}
+
 	change_task_state(q, t, VINE_TASK_RUNNING);
 
 	t->try_count += 1;
@@ -4904,6 +4909,14 @@ static void handle_library_update(struct vine_manager *q, struct vine_worker_inf
 	if (n != 2) {
 		debug(D_VINE, "Library %d update message is corrupt.", library_id);
 		return;
+	}
+
+	uint64_t task_id;
+	struct vine_task *task;
+	ITABLE_ITERATE(w->current_tasks, task_id, task) {
+	    if (task_id == library_id) {
+		task->library_state = VINE_LIBRARY_STARTED;
+	    }
 	}
 
 	vine_txn_log_write_library_update(q, w, library_id, state);

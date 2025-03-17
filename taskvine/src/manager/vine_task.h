@@ -58,6 +58,7 @@ struct vine_task {
 
 	char *needs_library;         /**< If this is a FunctionTask, the name of the library used */
 	char *provides_library;      /**< If this is a LibraryTask, the name of the library provided. */
+        vine_library_state_t library_state;     /**< If this is a LibraryTask, the state of the library. */
 	int   function_slots_requested; /**< If this is a LibraryTask, the number of function slots requested by the user. -1 causes the number of slots to match the number of cores. */
         vine_task_func_exec_mode_t func_exec_mode;    /**< If this a LibraryTask, the execution mode of its functions. */
 	

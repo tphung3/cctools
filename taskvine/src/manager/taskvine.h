@@ -80,6 +80,15 @@ typedef enum {
 	VINE_SCHEDULE_WORST      /**< Select the worst fit worker (the worker with more unused resources). */
 } vine_schedule_t;
 
+/* States known about libraries */
+
+typedef enum {
+        VINE_LIBRARY_WAITING = 0,
+        VINE_LIBRARY_SENT,
+        VINE_LIBRARY_STARTED,
+        VINE_LIBRARY_FAILURE
+} vine_library_state_t;
+
 /** Possible outcomes for a task, returned by @ref vine_task_get_result.
 These results can be converted to a string with @ref vine_result_string.
 */

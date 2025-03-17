@@ -62,15 +62,6 @@ typedef enum {
 	VINE_WORKER_DISCONNECT_XFER_ERRORS
 } vine_worker_disconnect_reason_t;
 
-/* States known about libraries */
-
-typedef enum {
-	VINE_LIBRARY_WAITING = 0,
-	VINE_LIBRARY_SENT,
-	VINE_LIBRARY_STARTED,
-	VINE_LIBRARY_FAILURE
-} vine_library_state_t;
-
 struct vine_worker_info;
 struct vine_task;
 struct vine_file;
