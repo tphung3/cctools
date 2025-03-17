@@ -293,7 +293,10 @@ int check_worker_against_task(struct vine_manager *q, struct vine_worker_info *w
 	if (t->needs_library) {
 		struct vine_task *library = vine_schedule_find_library(q, w, t->needs_library);
 		if (library) {
-			/* The worker already has the library with a free slot. */
+			/* The worker already has the library with a free slot. A function is only sent when the library task is already running. */
+                        if (library->library_state != VINE_LIBRARY_STARTED) {
+                            return 0;
+                        }
 		} else {
 			library = vine_manager_find_library_template(q, t->needs_library);
 			if (library) {
@@ -320,7 +323,7 @@ struct vine_task *vine_schedule_find_library(struct vine_manager *q, struct vine
 	struct vine_task *task;
 	ITABLE_ITERATE(w->current_tasks, task_id, task)
 	{
-		if (task->type == VINE_TASK_TYPE_LIBRARY_INSTANCE && task->provides_library && !strcmp(task->provides_library, library_name) && task->library_state == VINE_LIBRARY_STARTED &&
+		if (task->type == VINE_TASK_TYPE_LIBRARY_INSTANCE && task->provides_library && !strcmp(task->provides_library, library_name) &&
 				(task->function_slots_inuse < task->function_slots_total)) {
 			return task;
 		}

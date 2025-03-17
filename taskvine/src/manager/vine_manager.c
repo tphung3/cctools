@@ -4915,7 +4915,7 @@ static void handle_library_update(struct vine_manager *q, struct vine_worker_inf
 	struct vine_task *task;
 	ITABLE_ITERATE(w->current_tasks, task_id, task)
 	{
-		if (task_id == library_id) {
+		if (task_id == (uint64_t) library_id) {
 			task->library_state = VINE_LIBRARY_STARTED;
 		}
 	}
