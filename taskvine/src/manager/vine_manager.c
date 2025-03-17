@@ -3009,7 +3009,7 @@ static vine_result_code_t commit_task_to_worker(struct vine_manager *q, struct v
 	t->worker = w;
 
 	if (t->provides_library) {
-		t->vine_library_state_t = VINE_LIBRARY_SENT;
+		t->library_state = VINE_LIBRARY_SENT;
 	}
 
 	change_task_state(q, t, VINE_TASK_RUNNING);
@@ -4913,10 +4913,11 @@ static void handle_library_update(struct vine_manager *q, struct vine_worker_inf
 
 	uint64_t task_id;
 	struct vine_task *task;
-	ITABLE_ITERATE(w->current_tasks, task_id, task) {
-	    if (task_id == library_id) {
-		task->library_state = VINE_LIBRARY_STARTED;
-	    }
+	ITABLE_ITERATE(w->current_tasks, task_id, task)
+	{
+		if (task_id == library_id) {
+			task->library_state = VINE_LIBRARY_STARTED;
+		}
 	}
 
 	vine_txn_log_write_library_update(q, w, library_id, state);
