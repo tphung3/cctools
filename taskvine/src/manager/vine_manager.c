@@ -2986,9 +2986,11 @@ static vine_result_code_t commit_task_to_worker(struct vine_manager *q, struct v
 			to put it back in the queue without doing anything.
 			*/
 
-			if (!t->library_task) {
+			/* WARNING: we always return as a failure here to force the function call to be matched again. */
+
+			//if (!t->library_task) {
 				return VINE_MGR_FAILURE;
-			}
+			//}
 		}
 		/* If start_one_task_fails, this will be decremented in handle_failure below. */
 		t->library_task->function_slots_inuse++;
@@ -3313,7 +3315,7 @@ int vine_manager_transfer_capacity_available(struct vine_manager *q, struct vine
 		}
 	}
 
-	debug(D_VINE, "task %lld has a ready transfer source for all files", (long long)t->task_id);
+	//debug(D_VINE, "task %lld has a ready transfer source for all files", (long long)t->task_id);
 	return 1;
 }
 
